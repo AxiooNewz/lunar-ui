@@ -46,7 +46,7 @@ local Config = {
         TouchMinWidth = 320, TouchMinHeight = 260,
         Topbar = 56, Sidebar = 196, SidebarCompact = 64, Header = 62, Ground = 24, UserCard = 58,
         CompactBreakpoint = 640, TwoColumnMin = 540, Margin = 24, TouchMargin = 10,
-        Radius = 12, Stroke = 3, Shadow = 6,
+        Radius = 16, Stroke = 1, Shadow = 6,
     },
     Metrics = {
         Desktop = { Row = 32, Box = 32, Item = 30, Track = 10, Knob = 18, Switch = Vector2.new(42, 22), SwitchKnob = 16, Tab = 38, Check = 22, Icon = 18, Depth = 4, Radius = 8 },
@@ -60,7 +60,7 @@ local Config = {
     },
     Selectable = { PadX = 10, Bar = 4, BarWidth = 4, Radius = 8, HoverAlpha = 0.35 },
     Button = { PadX = 14, IconGap = 6, Depth = 4, HoverLighten = 0.14 },
-    Group = { Header = 36, PadX = 12, PadY = 10, Shadow = 4, Radius = 12, Stroke = 2 },
+    Group = { Header = 36, PadX = 12, PadY = 10, Shadow = 4, Radius = 16, Stroke = 2 },
     Gap = { X = 8, Y = 6, Column = 12 },
     Page = { Pad = 14, ScrollBar = 6 },
     Dropdown = { MaxVisible = 7, SearchThreshold = 8, MinWidth = 170 },
@@ -132,7 +132,7 @@ local Themes = {
         Panel = "241830", PanelHeader = "301F40", Element = "2E2140", Hover = "3C2A52",
         Outline = "0B0610", Shadow = "0B0610", Text = "FFF1E2", SubText = "D7BFD9", Muted = "9C85A8", Track = "4A3460",
         Cloud = "B98CFF", CloudAlpha = 0.85, Accent = "F28A2E", AccentDark = "B85E14", Grass = "7A3FA8", GrassDark = "4E2470", Brick = "4A2E60", BrickDark = "1E1028", Decor = { "Halloween", "✦", "FFB347" },
-        Glow = "F28A2E", Fog = "8E5CD0", Logo = "logo_halloween",
+        Glow = "F28A2E", Fog = "8E5CD0", Logo = "",
         Particle = { { "✦", "✦", "•", "✧" }, false, "FFB347" },
     }),
     Light = Palette({
