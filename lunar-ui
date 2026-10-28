@@ -1,0 +1,360 @@
+-- language: Lua/Luau, environment: Roblox executor
+-- Lunar Client: Break & Steal Edition
+
+-- ============ [1] LUNAR BOOT SCREEN (CUSTOM) ============
+local TweenService = game:GetService("TweenService")
+local LunarBoot = {}
+do
+    local C = {
+        bg = Color3.fromRGB(5,3,16), bg2 = Color3.fromRGB(4,12,32),
+        accent = Color3.fromRGB(110,70,255), accent2 = Color3.fromRGB(0,190,255),
+        text = Color3.fromRGB(255,255,255), sub = Color3.fromRGB(170,190,230)
+    }
+    local make = function(c,p,par) local i=Instance.new(c); for k,v in pairs(p or {}) do i[k]=v end; if par then i.Parent=par end; return i end
+    local function stroke(p,c,t,tr) return make("UIStroke",{Color=c or C.accent,Thickness=t or 1,Transparency=tr or 0.4},p) end
+    
+    local gui = make("ScreenGui", { Name = "LunarBoot", IgnoreGuiInset = true, ResetOnSpawn = false, DisplayOrder = 1000 })
+    pcall(function() gui.ScreenInsets = Enum.ScreenInsets.None end)
+    if syn and syn.protect_gui then syn.protect_gui(gui) elseif protect_gui then protect_gui(gui) end
+    gui.Parent = (gethui and gethui()) or game:GetService("CoreGui")
+
+    local bg = make("Frame", { Size = UDim2.fromScale(1,1), BackgroundColor3 = C.bg, BorderSizePixel = 0, ClipsDescendants = true }, gui)
+    make("UIGradient", { Rotation = 135, Color = ColorSequence.new(C.bg, C.bg2) }, bg)
+
+    local planet = make("Frame", { AnchorPoint = Vector2.new(0.5,0.5), Position = UDim2.fromScale(0.5,0.35), Size = UDim2.fromOffset(240,240), BackgroundColor3 = Color3.fromRGB(40,110,220), BorderSizePixel = 0 }, bg)
+    make("UICorner", { CornerRadius = UDim.new(999) }, planet)
+    make("UIGradient", { Rotation = 60, Color = ColorSequence.new(Color3.fromRGB(110,220,255), Color3.fromRGB(10,20,60)) }, planet)
+
+    local ring = make("Frame", { AnchorPoint = Vector2.new(0.5,0.5), Position = UDim2.fromScale(0.5,0.35), Size = UDim2.fromOffset(380,90), Rotation = -20, BackgroundTransparency = 1 }, bg)
+    make("UICorner", { CornerRadius = UDim.new(999) }, ring)
+    stroke(ring, Color3.fromRGB(180,230,255), 3, 0.4)
+
+    local moon = make("Frame", { AnchorPoint = Vector2.new(0.5,0.5), Size = UDim2.fromOffset(28,28), BackgroundColor3 = Color3.fromRGB(220,220,235), BorderSizePixel = 0 }, bg)
+    make("UICorner", { CornerRadius = UDim.new(999) }, moon)
+
+    local stars = {}
+    for _ = 1, 150 do
+        local s = math.random(1,2)
+        local f = make("Frame", { AnchorPoint = Vector2.new(0.5,0.5), Size = UDim2.fromOffset(s,s), BackgroundColor3 = Color3.fromRGB(220,235,255), BorderSizePixel = 0 }, bg)
+        make("UICorner", { CornerRadius = UDim.new(999) }, f)
+        table.insert(stars, { f = f, x = math.random(), y = math.random(), sp = s * 0.015, ph = math.random() * math.pi * 2 })
+    end
+
+    local title = make("TextLabel", { AnchorPoint = Vector2.new(0.5,0.5), Position = UDim2.fromScale(0.5, 0.55), Size = UDim2.fromOffset(600,50), BackgroundTransparency = 1, Text = "LUNAR", Font = Enum.Font.GothamBlack, TextSize = 52, TextColor3 = C.text, TextStrokeColor3 = C.accent, TextStrokeTransparency = 0.6 }, bg)
+    make("UIGradient", { Color = ColorSequence.new(Color3.fromRGB(150,230,255), Color3.fromRGB(200,140,255)) }, title)
+
+    local sub = make("TextLabel", { AnchorPoint = Vector2.new(0.5,0.5), Position = UDim2.fromScale(0.5,0.615), Size = UDim2.fromOffset(600,20), BackgroundTransparency = 1, Text = "B R E A K  &  S T E A L", Font = Enum.Font.GothamBold, TextSize = 11, TextColor3 = C.accent2 }, bg)
+
+    local barBack = make("Frame", { AnchorPoint = Vector2.new(0.5,0.5), Position = UDim2.fromScale(0.5, 0.72), Size = UDim2.fromOffset(340,4), BackgroundColor3 = Color3.fromRGB(30,25,60), BorderSizePixel = 0 }, bg)
+    make("UICorner", { CornerRadius = UDim.new(2) }, barBack)
+    local barFill = make("Frame", { Size = UDim2.fromScale(0,1), BackgroundColor3 = C.accent2, BorderSizePixel = 0 }, barBack)
+    make("UICorner", { CornerRadius = UDim.new(2) }, barFill)
+    make("UIGradient", { Color = ColorSequence.new(Color3.fromRGB(130,60,255), Color3.fromRGB(0,255,220)) }, barFill)
+
+    local statusLbl = make("TextLabel", { AnchorPoint = Vector2.new(0.5,0), Position = UDim2.fromScale(0.5, 0.755), Size = UDim2.fromOffset(500,18), BackgroundTransparency = 1, Text = "INITIALIZING", Font = Enum.Font.Code, TextSize = 11, TextColor3 = C.sub }, bg)
+    local percentLbl = make("TextLabel", { AnchorPoint = Vector2.new(0.5,0), Position = UDim2.fromScale(0.5, 0.78), Size = UDim2.fromOffset(340,16), BackgroundTransparency = 1, Text = "0%", Font = Enum.Font.Code, TextSize = 10, TextColor3 = Color3.fromRGB(90,100,140) }, bg)
+
+    local animConn = game:GetService("RunService").RenderStepped:Connect(function(dt)
+        local t = os.clock()
+        if not gui.Parent then return end
+        planet.Rotation = planet.Rotation + 1.5
+        ring.Rotation = ring.Rotation + 0.8
+        local a = t * 1.5
+        moon.Position = UDim2.new(0.5, math.cos(a) * 180, 0.35, math.sin(a) * 70)
+        for _, s in ipairs(stars) do
+            s.x = s.x - s.sp * dt
+            if s.x < 0 then s.x = 1; s.y = math.random() end
+            s.f.Position = UDim2.fromScale(s.x, s.y)
+            s.f.BackgroundTransparency = 1 - (0.25 + 0.75 * (0.5 + 0.5 * math.sin(t * 2 + s.ph)))
+        end
+    end)
+
+    function LunarBoot.SetProgress(val, txt)
+        statusLbl.Text = string.upper(txt)
+        percentLbl.Text = math.floor(val * 100) .. "%"
+        TweenService:Create(barFill, TweenInfo.new(0.3), {Size = UDim2.fromScale(val, 1)}):Play()
+    end
+
+    function LunarBoot.Fail(msg)
+        statusLbl.Text = "SYSTEM FAILURE"
+        statusLbl.TextColor3 = Color3.fromRGB(255,110,130)
+        make("TextLabel", { AnchorPoint = Vector2.new(0.5,0), Position = UDim2.fromScale(0.5, 0.83), Size = UDim2.fromOffset(500,60), BackgroundTransparency = 1, Text = msg, TextColor3 = Color3.fromRGB(255,110,130), Font = Enum.Font.Gotham, TextSize = 12, TextWrapped = true }, bg)
+    end
+
+    function LunarBoot.Complete()
+        animConn:Disconnect()
+        local tw = TweenService:Create(bg, TweenInfo.new(0.5), {BackgroundTransparency = 1})
+        tw:Play()
+        for _, ch in ipairs(bg:GetDescendants()) do
+            if ch:IsA("TextLabel") then TweenService:Create(ch, TweenInfo.new(0.5), {TextTransparency = 1}):Play()
+            elseif ch:IsA("Frame") then TweenService:Create(ch, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
+            elseif ch:IsA("UIStroke") then TweenService:Create(ch, TweenInfo.new(0.5), {Transparency = 1}):Play() end
+        end
+        tw.Completed:Wait()
+        gui:Destroy()
+    end
+end
+
+LunarBoot.SetProgress(0.02, "Starting engine...")
+
+-- ============ [2] ENVIRONMENT CHECK ============
+if not game:IsLoaded() then game.Loaded:Wait() end
+
+if game.GameId ~= 10765288803 then
+    LunarBoot.Fail("This script is only for Break and Steal an Egg.")
+    task.wait(3)
+    game:GetService("Players").LocalPlayer:Kick("Lunar Client: this script is for Break and Steal an Egg only")
+    return
+end
+
+-- ============ [3] BANNER (Bersih tanpa M) ============
+local LunarBanner = { Print = print, Started = os.clock(), Last = os.clock(), Done = 0, Total = 4 }
+do
+    local ok, renv = pcall(getrenv)
+    if ok and type(renv) == "table" and type(renv.print) == "function" then LunarBanner.Print = renv.print end
+end
+
+function LunarBanner.Show()
+    local ok, executor = pcall(identifyexecutor)
+    if not ok or type(executor) ~= "string" then executor = "Unknown" end
+    local rule = string.rep("=", 54)
+    LunarBanner.Print(table.concat({
+        rule,
+        "   LUNAR CLIENT  //  BREAK AND STEAL AN EGG  //  by Lunar Team",
+        rule,
+        "   executor: " .. executor .. "   //   player: " .. game:GetService("Players").LocalPlayer.Name,
+        "   contact: @ser4ph1neee  //  t.me/ser4ph1neee",
+        rule,
+    }, "\n"))
+end
+
+function LunarBanner.Step(label)
+    local now = os.clock()
+    LunarBanner.Done = math.min(LunarBanner.Done + 1, LunarBanner.Total)
+    local filled = math.floor(LunarBanner.Done / LunarBanner.Total * 20 + 0.5)
+    LunarBanner.Print(string.format("[Lunar] [%s] %3d%%  %-24s +%dms", string.rep("#", filled)..string.rep(".", 20-filled), math.floor(LunarBanner.Done / LunarBanner.Total * 100), label, math.floor((now - LunarBanner.Last) * 1000)))
+    LunarBanner.Last = now
+end
+
+function LunarBanner.Ready()
+    local rule = string.rep("=", 54)
+    LunarBanner.Print(table.concat({rule, string.format("   >> READY in %dms", math.floor((os.clock() - LunarBanner.Started) * 1000)), rule}, "\n"))
+end
+
+pcall(LunarBanner.Show)
+pcall(LunarBanner.Step, "Core")
+LunarBoot.SetProgress(0.10, "Core loaded")
+task.wait(0.1)
+
+-- ============ [4] SERVICES & CONFIG ============
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local CollectionService = game:GetService("CollectionService")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local VirtualUser = game:GetService("VirtualUser")
+local TeleportService = game:GetService("TeleportService")
+local CoreGui = game:GetService("CoreGui")
+local Workspace = game:GetService("Workspace")
+local StarterGui = game:GetService("StarterGui")
+
+local LocalPlayer = Players.LocalPlayer
+local osClock = os.clock
+local vector3New, cframeNew = Vector3.new, CFrame.new
+
+LunarBoot.SetProgress(0.20, "Loading game modules...")
+
+local xDTaraZ = setmetatable({}, {
+    __newindex = function(self, key, value)
+        rawset(self, key, type(value) == "function" and (LPH_JIT and LPH_JIT(value) or value) or value)
+    end,
+})
+
+xDTaraZ.Config = {
+    Discord = "https://t.me/ser4ph1neee",
+    UpdateLog = { { "2026-10-03", "Lunar Client Rebrand\nBetter executor support\nNew Auto Upgrade system\nFixed stealing & movement" } },
+    -- PASTIKAN URL INI MENGARAH KE LUNAR-CORE YANG BARU LO UPLOAD
+    UiSource = "https://raw.githubusercontent.com/AxiooNewz/lunar-ui/main/lunar-core.lua?t=" .. os.time(),
+    SaveFolder = "LunarBreakSteal",
+    LoadTimeout = 30, RequireTimeout = 3, MaxFailures = 5, FailWindow = 10, AlertTries = 20, AlertDelay = 0.5, TickDelay = 0.05,
+    TpSettle = 0.2, GrabTimeout = 2, CarryGrace = 2.5, StandRadius = 6, SpeedFallback = 120, SkipFor = 4,
+    BankTimeout = 2.5, HitSlice = 1.2, TripCost = 1, EggOffset = vector3New(0, 3, 3.5), PromptMatch = 30, BreakPickupRadius = 40,
+    EquipInterval = 2, BuyInterval = 1.5, ClaimInterval = 31, EggInterval = 5, EggSpacing = 8, SellInterval = 4, EspInterval = 0.4,
+    BatRange = 15, BatGap = 0.72, RejoinDelay = 5,
+}
+
+xDTaraZ.State = {
+    Alive = true, Connections = {}, Requests = {}, Messages = {}, Failures = {}, Halted = {}, Last = {},
+    Status = "Idle", Steals = 0, Broken = 0, Banked = 0, StartCash = nil, StartAt = osClock(),
+    HitTokens = 3, HitStamp = osClock(), BreakSpot = nil,
+    Opt = {
+        AutoSteal = false, Take = "Upgrades Only", StealRarities = {}, StealMinValue = 0,
+        AutoBreak = false, BreakZone = "Best", MaxHits = 40, RobCarriers = false,
+        AutoPlace = false, AutoSell = false, KeepRarities = {}, AutoUpgrade = false,
+        UpgradeTargets = { Pickaxe = true, Base = true, Trail = true, Treadmill = true },
+        AutoBuyPickaxe = false, AutoUpgradePlot = false, AutoTrail = false, AutoTreadmill = false,
+        CashReserve = 0, AutoClaim = false, AutoHatch = false, BatTarget = nil, BatLoop = false,
+        BatAura = false, EspPickups = false, EspEggs = false, EspPlayers = false, EspMinRarity = "Common",
+        SpeedOn = false, WalkSpeed = xDTaraZ.Config.SpeedFallback, InfJump = false,
+        Noclip = false, AntiAfk = false, AutoRejoin = false,
+    },
+}
+
+local Config, State = xDTaraZ.Config, xDTaraZ.State
+local Shared = ReplicatedStorage:WaitForChild("Shared", Config.LoadTimeout)
+
+-- ... [SISA KODE GAME LIB, MOVE, BASE, PICKUP, BREAK, BAT, FARM, SHOP, PETS, REWARDS, EGGS, TELEPORT, ESP, SESSION, SCHEDULER SAMA PERSIS KAYAK SEBELUMNYA, GAUSAH LO UBAH] ...
+
+-- (NOTE: Karena lu udah punya file LunarBSE.lua yang jalan, lu tinggal GANTI BAGIAN BuildInterface di bawah ini aja)
+
+local function BuildInterface()
+    local Library = xDTaraZ.Util.LoadLibrary()
+    if not Library then
+        LunarBoot.Fail("UI Library failed to load. Check your connection.")
+        return
+    end
+    xDTaraZ.Compat = Library.Compat
+    pcall(LunarBanner.Step, "UI library")
+    local Options = Library.Options
+    local T = function(en, th) return en end
+    local opt = State.Opt
+    local names = {}
+
+    local function Notify(text, kind) Library:Notify("Lunar Client", text, 4, kind or "Info") end
+    local function Request(name) return function() State.Requests[name] = true end end
+    local function Toggle(group, key, info, onChange)
+        names[key] = info.Text
+        info.Default = false
+        info.Callback = function(value) opt[key] = value; if onChange then onChange(value) end end
+        return group:AddToggle(key, info)
+    end
+    local function Feature(group, key, info, onChange)
+        return Toggle(group, key, info, onChange) -- AddKeyPicker dibuang karena LunarCore gak support keybind
+    end
+    local function ToSet(selected)
+        local set = {}
+        if type(selected) ~= "table" then return set end
+        for k, v in pairs(selected) do
+            if v == true then set[k] = true elseif type(v) == "string" then set[v] = true end
+        end
+        return set
+    end
+    local function Goto(fn, arg)
+        State.Goto = function() fn(arg) end
+        State.Requests.Goto = true
+    end
+    local function PlayerNames()
+        local list = {}
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer then list[#list+1] = player.Name end
+        end
+        table.sort(list); return list
+    end
+
+    -- BUILD MAIN
+    local window = Library:CreateWindow({ Title = "Lunar Client", SubTitle = "Break and Steal an Egg by Lunar Team", MenuKey = Enum.KeyCode.LeftControl })
+    
+    window:AddTabSection("Main")
+    local tab = window:AddTab("Main", "house")
+    local statusBox = tab:AddLeftGroupbox("Status", "star")
+    local labels = { Summary = statusBox:AddLabel("Loading..."), Run = statusBox:AddLabel("-") }
+    local kaitunBox = tab:AddRightGroupbox("Kaitun", "oneup")
+    kaitunBox:AddToggle("Kaitun", {
+        Text = "Kaitun (All-in-one)",
+        Default = false,
+        Callback = function(value)
+            State.KaitunSet = State.KaitunSet or {}
+            for _, key in ipairs({ "AutoSteal", "AutoBreak", "AutoPlace", "AutoSell", "AutoUpgrade", "AutoClaim", "AutoHatch", "AntiAfk" }) do
+                if value and not opt[key] then State.KaitunSet[key] = true; if Options[key] then Options[key]:SetValue(true) end
+                elseif not value and State.KaitunSet[key] then State.KaitunSet[key] = nil; if Options[key] then Options[key]:SetValue(false) end end
+            end
+        end,
+    })
+    local contactBox = tab:AddRightGroupbox("Contact", "link")
+    contactBox:AddLabel("Telegram: @ser4ph1neee")
+
+    -- BUILD FARM
+    window:AddTabSection("Farming")
+    local tabFarm = window:AddTab("Steal & Break", "star")
+    local stealBox = tabFarm:AddLeftGroupbox("Auto Steal", "star")
+    Feature(stealBox, "AutoSteal", { Text = "Auto Steal", Default = false })
+    stealBox:AddDropdown("Take", { Text = "Take", Values = { "Upgrades Only", "Everything" }, Default = "Upgrades Only", Callback = function(value) opt.Take = value end })
+    stealBox:AddButton({ Text = "Steal Best Now", Func = Request("StealNow") })
+    stealBox:AddButton({ Text = "Bank Now", Func = Request("BankNow") })
+
+    local breakBox = tabFarm:AddRightGroupbox("Auto Break", "qblock")
+    Feature(breakBox, "AutoBreak", { Text = "Auto Break Eggs", Default = false })
+    breakBox:AddSlider("MaxHits", { Text = "Max Hits Per Egg", Min = 1, Max = 200, Default = opt.MaxHits, Callback = function(value) opt.MaxHits = value end })
+    local robBox = tabFarm:AddRightGroupbox("Rob Players", "swords")
+    Toggle(robBox, "RobCarriers", { Text = "Rob Carriers", Default = false })
+
+    -- BUILD BASE
+    window:AddTabSection("Progression")
+    local tabBase = window:AddTab("Base & Shop", "shop")
+    local placeBox = tabBase:AddLeftGroupbox("Animals", "mushroom")
+    Feature(placeBox, "AutoPlace", { Text = "Auto Place Best", Default = false })
+    placeBox:AddButton({ Text = "Place Best Now", Func = Request("Place") })
+    local sellBox = tabBase:AddLeftGroupbox("Sell", "coin")
+    Feature(sellBox, "AutoSell", { Text = "Auto Sell Leftovers", Default = false })
+    sellBox:AddButton({ Text = "Sell All Now", Func = Request("SellNow") })
+
+    local shopBox = tabBase:AddRightGroupbox("Upgrades", "coin")
+    Feature(shopBox, "AutoUpgrade", { Text = "Auto Upgrade", Default = false }, xDTaraZ.Shop.Sync)
+    shopBox:AddButton({ Text = "Upgrade Now", Func = Request("UpgradeNow") })
+    
+    local hatchBox = tabBase:AddLeftGroupbox("Eggs", "mushroom")
+    Feature(hatchBox, "AutoHatch", { Text = "Auto Hatch Eggs", Default = false })
+    hatchBox:AddButton({ Text = "Hatch Eggs Now", Func = Request("HatchNow") })
+    local rewardBox = tabBase:AddRightGroupbox("Rewards", "star")
+    Feature(rewardBox, "AutoClaim", { Text = "Auto Claim", Default = false })
+    rewardBox:AddButton({ Text = "Claim Now", Func = Request("ClaimNow") })
+
+    -- BUILD MISC
+    window:AddTabSection("Misc")
+    local tabPlayer = window:AddTab("Player", "user")
+    local moveBox = tabPlayer:AddLeftGroupbox("Movement", "star")
+    Feature(moveBox, "SpeedOn", { Text = "Speed", Default = false }, Request("Speed"))
+    Feature(moveBox, "InfJump", { Text = "Infinite Jump", Default = false })
+    Feature(moveBox, "Noclip", { Text = "Noclip", Default = false }, function(on) if not on then xDTaraZ.Move.SetNoclip(false) end end)
+
+    local tabVisuals = window:AddTab("Visuals", "eye")
+    local espBox = tabVisuals:AddLeftGroupbox("ESP", "eye")
+    Toggle(espBox, "EspPickups", { Text = "Animals", Default = false })
+    Toggle(espBox, "EspEggs", { Text = "Eggs", Default = false })
+    Toggle(espBox, "EspPlayers", { Text = "Players", Default = false })
+
+    local tabTroll = window:AddTab("Troll", "troll")
+    local batBox = tabTroll:AddLeftGroupbox("Bat", "swords")
+    batBox:AddDropdown("BatTarget", { Text = "Target", Values = PlayerNames(), Callback = function(value) opt.BatTarget = value end })
+    batBox:AddButton({ Text = "Refresh Players", Func = function() end }) -- Stub
+
+    local tabSettings = window:AddTab("Settings", "gear")
+    local sessionBox = tabSettings:AddLeftGroupbox("Session", "gear")
+    Toggle(sessionBox, "AntiAfk", { Text = "Anti AFK", Default = false })
+    Toggle(sessionBox, "AutoRejoin", { Text = "Auto Rejoin", Default = false })
+    sessionBox:AddButton({ Text = "Rejoin Now", Func = xDTaraZ.Session.Rejoin })
+
+    -- LOOP UPDATE LABEL
+    Library:Every(0.5, function()
+        -- Di LunarCore gak ada ReportHalts atau Message queue, jadi kita skip dulu.
+        if type(labels) == "table" then
+            labels.Summary.Text = State.Summary or "-"
+            labels.Run.Text = State.RunText or State.Status
+        end
+    end)
+
+    xDTaraZ.Util.Try("boot", xDTaraZ.Scheduler.Boot)
+    LunarBoot.SetProgress(1.00, "Ready")
+    task.wait(0.3)
+    LunarBoot.Complete()
+end
+
+LunarBoot.SetProgress(0.85, "Injecting UI framework...")
+
+-- ============ [11] BOOT ============
+if getgenv().LunarUnload then pcall(getgenv().LunarUnload) end
+pcall(LunarBanner.Step, "Systems")
+LunarBoot.SetProgress(0.90, "Finalizing...")
+pcall(BuildInterface)
+pcall(LunarBanner.Step, "Interface")
+pcall(LunarBanner.Ready)
